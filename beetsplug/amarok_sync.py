@@ -21,6 +21,43 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from beets.plugins import BeetsPlugin
+from beets.util import displayable_path
+import MySQLdb
+
+def get_amarok_data(item, db):
+    query = "SELECT REPLACE(uniqueid, 'amarok-sqltrackuid://', '') AS uniqueid, rating, score \
+             FROM statistics \
+                INNER JOIN urls ON statistics.url = urls.id \
+                INNER JOIN devices ON devices.id = urls.deviceid \
+            WHERE REPLACE(CONCAT_WS('/',lastmountpoint, rpath), '/./', '/') = '%s' \
+            LIMIT 1" % displayable_path(item.path)
+
+    cursor = db.cursor()
+
+    cursor.execute(query)
+
+    row = cursor.fetchone()
+
+    print(displayable_path(item.path))
+    item.amarok_uid = row[0]
+    item.rating = row[1]
+    item.score = row[2]
 
 class AmarokSync(BeetsPlugin):
-    pass
+    def __init__(self):
+        super(AmarokSync, self).__init__()
+        self.import_stages = [self.stage]
+
+    def stage(self, config, task):
+        print('Amarok sync on import!')
+        db = MySQLdb.connect(
+            host=self.config['db_host'].get(),
+            user=self.config['db_user'].get(),
+            passwd=self.config['db_passwd'].get(),
+            db=self.config['db_database'].get())
+
+        for item in task.imported_items():
+            get_amarok_data(item, db)
+            print(item.rating)
+
+        db.close();
