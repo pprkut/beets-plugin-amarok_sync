@@ -72,7 +72,8 @@ class AmarokSync(BeetsPlugin):
                 host=self.config['db_host'].get(),
                 user=self.config['db_user'].get(),
                 passwd=self.config['db_passwd'].get(),
-                db=self.config['db_database'].get())
+                db=self.config['db_database'].get(),
+                charset="utf8")
 
             for item in task.imported_items():
                 get_amarok_data(item, db)
