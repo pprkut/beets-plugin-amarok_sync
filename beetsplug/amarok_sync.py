@@ -36,16 +36,26 @@ def get_amarok_data(item, db):
             WHERE REPLACE(CONCAT_WS('/',lastmountpoint, rpath), '/./', '/') = '%s' \
             LIMIT 1" % displayable_path(item.path)
 
-    cursor = db.cursor()
+    try:
+        cursor = db.cursor()
 
-    cursor.execute(query)
+        cursor.execute(query)
 
-    row = cursor.fetchone()
+        row = cursor.fetchone()
+
+    except MySQLdb.Error, e:
+        log.error(u'Could not fetch metadata from amarok database: {0}'.format(e))
+        row = (None, 0, 0)
+
+    if row is None:
+        log.info(u'Could not find entry for \'{0}\' in amarok database'.format(displayable_path(item.path)))
+        row = (None, 0, 0)
 
     print(displayable_path(item.path))
     item.amarok_uid = row[0]
     item.rating = row[1]
     item.score = row[2]
+
 
 class AmarokSync(BeetsPlugin):
     def __init__(self):
@@ -66,6 +76,7 @@ class AmarokSync(BeetsPlugin):
 
             for item in task.imported_items():
                 get_amarok_data(item, db)
+                print(item.amarok_uid)
                 print(item.rating)
 
         except MySQLdb.Error, e:
