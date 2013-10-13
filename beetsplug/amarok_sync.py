@@ -20,9 +20,13 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import logging
+import MySQLdb
+
 from beets.plugins import BeetsPlugin
 from beets.util import displayable_path
-import MySQLdb
+
+log = logging.getLogger('beets')
 
 def get_amarok_data(item, db):
     query = "SELECT REPLACE(uniqueid, 'amarok-sqltrackuid://', '') AS uniqueid, rating, score \
@@ -50,14 +54,23 @@ class AmarokSync(BeetsPlugin):
 
     def stage(self, config, task):
         print('Amarok sync on import!')
-        db = MySQLdb.connect(
-            host=self.config['db_host'].get(),
-            user=self.config['db_user'].get(),
-            passwd=self.config['db_passwd'].get(),
-            db=self.config['db_database'].get())
 
-        for item in task.imported_items():
-            get_amarok_data(item, db)
-            print(item.rating)
+        db = None
 
-        db.close();
+        try:
+            db = MySQLdb.connect(
+                host=self.config['db_host'].get(),
+                user=self.config['db_user'].get(),
+                passwd=self.config['db_passwd'].get(),
+                db=self.config['db_database'].get())
+
+            for item in task.imported_items():
+                get_amarok_data(item, db)
+                print(item.rating)
+
+        except MySQLdb.Error, e:
+            log.error(u'Could not connect to Amarok database: {0}'.format(e))
+
+        finally:
+            if (db):
+                db.close();
