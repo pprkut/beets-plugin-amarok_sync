@@ -34,7 +34,7 @@ def get_amarok_data(item, db):
                 INNER JOIN urls ON statistics.url = urls.id \
                 INNER JOIN devices ON devices.id = urls.deviceid \
             WHERE REPLACE(CONCAT_WS('/',lastmountpoint, rpath), '/./', '/') = '%s' \
-            LIMIT 1" % displayable_path(item.path)
+            LIMIT 1" % MySQLdb.escape_string(displayable_path(item.path))
 
     try:
         cursor = db.cursor()
