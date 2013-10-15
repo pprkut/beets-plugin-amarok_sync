@@ -23,18 +23,25 @@
 import logging
 import MySQLdb
 
+from beets import ui
 from beets.plugins import BeetsPlugin
 from beets.util import displayable_path
 
 log = logging.getLogger('beets')
 
 def get_amarok_data(item, db):
+
+    if hasattr(item, 'amarok_uid') and item.amarok_uid:
+        condition = "REPLACE(uniqueid, 'amarok-sqltrackuid://', '') = '%s'" % MySQLdb.escape_string(item.amarok_uid)
+    else:
+        condition = "REPLACE(CONCAT_WS('/',lastmountpoint, rpath), '/./', '/') = '%s'" % MySQLdb.escape_string(displayable_path(item.path))
+
     query = "SELECT REPLACE(uniqueid, 'amarok-sqltrackuid://', '') AS uniqueid, rating, score \
              FROM statistics \
                 INNER JOIN urls ON statistics.url = urls.id \
                 INNER JOIN devices ON devices.id = urls.deviceid \
-            WHERE REPLACE(CONCAT_WS('/',lastmountpoint, rpath), '/./', '/') = '%s' \
-            LIMIT 1" % MySQLdb.escape_string(displayable_path(item.path))
+            WHERE %s \
+            LIMIT 1" % condition
 
     try:
         cursor = db.cursor()
@@ -53,14 +60,47 @@ def get_amarok_data(item, db):
 
     print(displayable_path(item.path))
     item.amarok_uid = row[0]
+
+    if hasattr(item, 'rating') and item.rating and long(item.rating) != row[1]:
+        ui.commands._showdiff('rating', item.rating, row[1])
+    if hasattr(item, 'score') and item.score and float(item.score) != row[2]:
+        ui.commands._showdiff('score', item.score, row[2])
+
     item.rating = row[1]
     item.score = row[2]
-
 
 class AmarokSync(BeetsPlugin):
     def __init__(self):
         super(AmarokSync, self).__init__()
         self.import_stages = [self.stage]
+
+    def commands(self):
+        def resync(lib, opts, args):
+            db = None
+
+            try:
+                db = MySQLdb.connect(
+                    host=self.config['db_host'].get(),
+                    user=self.config['db_user'].get(),
+                    passwd=self.config['db_passwd'].get(),
+                    db=self.config['db_database'].get(),
+                    charset="utf8")
+
+                for item in lib.items(ui.decargs(args)):
+                    get_amarok_data(item, db)
+                    item.store()
+
+            except MySQLdb.Error, e:
+                log.error(u'Could not connect to Amarok database: {0}'.format(e))
+
+            finally:
+                if (db):
+                    db.close();
+
+        amarok_sync = ui.Subcommand('amarok_sync', help='Update metadata from amarok')
+        amarok_sync.func = resync
+
+        return [amarok_sync]
 
     def stage(self, config, task):
         print('Amarok sync on import!')
