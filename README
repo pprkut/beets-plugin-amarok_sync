@@ -1,0 +1,16 @@
+
+Amarok metadata synchronization plugin for beets.
+
+This plugin for beets gets data from an Amarok collection. It uses the
+filesystem path of the file to identify the track in Amarok's database. After
+we found the track we store rating and score information as well as Amarok's
+unique ID for the track to make re-synchronization of the data easier and more
+reliable.
+
+Limitations:
+
+Amarok by default stores its collection data in an embedded MySQL database.
+For this plugin to work Amarok needs to be configured to store its collection
+data in an external MySQL server. Since no foreign processes can connect to an
+embedded MySQL server this plugin wouldn't be able to fetch the information
+otherwise.
