@@ -65,7 +65,6 @@ def get_amarok_data(item, db):
         log.info(u'Could not find entry for \'{0}\' in amarok database'.format(displayable_path(item.path)))
         row = (None, 0, 0)
 
-    print(displayable_path(item.path))
     item.amarok_uid = row[0]
 
     if hasattr(item, 'rating') and item.rating and long(item.rating) != row[1]:
@@ -110,8 +109,6 @@ class AmarokSync(BeetsPlugin):
         return [amarok_sync]
 
     def stage(self, config, task):
-        print('Amarok sync on import!')
-
         db = None
 
         try:
@@ -124,8 +121,6 @@ class AmarokSync(BeetsPlugin):
 
             for item in task.imported_items():
                 get_amarok_data(item, db)
-                print(item.amarok_uid)
-                print(item.rating)
 
         except MySQLdb.Error, e:
             log.error(u'Could not connect to Amarok database: {0}'.format(e))
