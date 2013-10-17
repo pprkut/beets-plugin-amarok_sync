@@ -67,9 +67,21 @@ def get_amarok_data(item, db):
 
     item.amarok_uid = row[0]
 
+    showdiff_rating = False
+    showdiff_score  = False
+
     if hasattr(item, 'rating') and item.rating and long(item.rating) != row[1]:
-        ui.commands._showdiff('rating', item.rating, row[1])
+        showdiff_rating = True
     if hasattr(item, 'score') and item.score and float(item.score) != row[2]:
+        showdiff_score = True
+
+    if showdiff_rating or showdiff_score:
+        print item.artist, " - ", item.album, " - ", item.title
+
+    if showdiff_rating:
+        ui.commands._showdiff('rating', item.rating, row[1])
+
+    if showdiff_score:
         ui.commands._showdiff('score', item.score, row[2])
 
     item.rating = row[1]
