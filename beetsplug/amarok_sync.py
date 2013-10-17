@@ -20,6 +20,10 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+"""Fetch metadata from an Amarok database and store it along other data in
+your library.
+"""
+
 import logging
 import MySQLdb
 
@@ -30,6 +34,9 @@ from beets.util import displayable_path
 log = logging.getLogger('beets')
 
 def get_amarok_data(item, db):
+    """Get data from an Amarok database. We fetch rating and score as well as Amarok's
+    unique id for the track to have more reliable syncing after the initial import.
+    """
 
     if hasattr(item, 'amarok_uid') and item.amarok_uid:
         condition = "REPLACE(uniqueid, 'amarok-sqltrackuid://', '') = '%s'" % MySQLdb.escape_string(item.amarok_uid)
