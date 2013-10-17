@@ -41,7 +41,7 @@ def get_amarok_data(item, db):
     if hasattr(item, 'amarok_uid') and item.amarok_uid:
         condition = "REPLACE(uniqueid, 'amarok-sqltrackuid://', '') = '%s'" % MySQLdb.escape_string(item.amarok_uid)
     else:
-        condition = "REPLACE(CONCAT_WS('/',lastmountpoint, rpath), '/./', '/') = '%s'" % MySQLdb.escape_string(displayable_path(item.path))
+        condition = "REPLACE(CONCAT_WS('/',lastmountpoint, rpath), '/./', '/') = '%s'" % MySQLdb.escape_string(item.path)
 
     query = "SELECT REPLACE(uniqueid, 'amarok-sqltrackuid://', '') AS uniqueid, rating, score \
              FROM statistics \
